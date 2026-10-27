@@ -16,7 +16,7 @@ export default function CutWeek({ snap, cut }: { snap: Snapshot; cut: CutSetting
   const today = todayISO();
   const [monday, setMonday] = useState(() => mondayOf(today));
   const { days, checkins } = snap.state;
-  const s = weekSummary(cut, days, liftDates(snap.sessions), monday, today);
+  const s = weekSummary(cut, snap.state, liftDates(snap.sessions), monday, today);
   const checkin = checkins[monday];
   const inCut = monday >= mondayOf(cut.startDate) && monday <= today;
   const input = checkpointInput(days, monday);

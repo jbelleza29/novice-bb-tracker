@@ -15,7 +15,7 @@ function mergeMap<T extends Stamped>(local: Record<string, T>, remote: Record<st
   return out;
 }
 
-// Newest wins per slot, per day log, per check-in and per settings group.
+// Newest wins per slot, day log, food entry, check-in and settings group.
 export function mergeState(localIn: AppState, remoteIn: AppState): AppState {
   const local = withDefaults(localIn), remote = withDefaults(remoteIn);
   const resetAt = Math.max(local.resetAt, remote.resetAt);
@@ -41,6 +41,7 @@ export function mergeState(localIn: AppState, remoteIn: AppState): AppState {
     cut: cut.cut,
     cutAt: cut.cutAt,
     days: mergeMap(local.days, remote.days, resetAt),
+    food: mergeMap(local.food, remote.food, resetAt),
     checkins: mergeMap(local.checkins, remote.checkins, resetAt),
   };
 }

@@ -48,6 +48,7 @@ export interface AppState {
   cut: CutSettings | null; // null until the cut setup form is filled in
   cutAt: number;
   days: Record<ISODate, DayLog>;
+  food: Record<string, FoodEntry>;
   checkins: Record<ISODate, CheckIn>;
 }
 
@@ -80,12 +81,9 @@ export interface CutSettings {
 
 export interface DayLog {
   weightKg?: number;
-  kcal?: number;
-  proteinG?: number;
-  fatG?: number;
-  carbsG?: number;
-  fibreG?: number;
-  steps?: number;
+  weighedAt?: number;
+  steps?: number; // day total from Apple Health or Garmin
+  stepsAt?: number;
   lifted?: boolean; // manual tick; logged workouts count automatically
   sleepHours?: number;
   lateNight?: boolean;
@@ -93,7 +91,34 @@ export interface DayLog {
   workFocus?: number; // 1–5, 5 = sharp
   ateOut?: boolean;
   notes?: string;
-  meals?: Meal[]; // estimated meals; their totals are already added to the fields above
+  updatedAt: number;
+}
+
+// Food logged before entries existed; moved into FoodEntry on load.
+export interface LegacyDayLog extends DayLog {
+  kcal?: number;
+  proteinG?: number;
+  fatG?: number;
+  carbsG?: number;
+  fibreG?: number;
+  meals?: Meal[];
+}
+
+// One thing eaten. Kept apart from DayLog so entries sync one by one.
+export interface FoodEntry {
+  id: string;
+  date: ISODate;
+  at: number;
+  name: string;
+  source: "described" | "manual";
+  kcal: number;
+  proteinG: number;
+  fatG?: number;
+  carbsG?: number;
+  fibreG?: number;
+  text?: string; // what was typed for a described meal
+  items?: MealItem[]; // Claude's breakdown for a described meal
+  deleted?: boolean; // kept so the delete wins over older copies on other devices
   updatedAt: number;
 }
 

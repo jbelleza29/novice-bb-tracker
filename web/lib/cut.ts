@@ -1,7 +1,7 @@
-import type { CutSettings, CutTargets, DayLog, Decision, ISODate, Session } from "./types";
+import type { AppState, CutSettings, CutTargets, DayLog, Decision, FoodEntry, ISODate, LegacyDayLog, MealItem, Session } from "./types";
 
 export const KCAL_FLOOR = 1600;
-export const RICE_CUP = { kcal: 200, carbsG: 45 }; // 1 cup cooked white rice
+export const RICE_CUP = { name: "Rice, 1 cup cooked", kcal: 200, proteinG: 4, carbsG: 45, fibreG: 1 };
 
 // Prefill for the setup form only; the user confirms or edits every value.
 export const CUT_PREFILL: CutSettings = {
@@ -50,6 +50,67 @@ export function avg7(days: Record<ISODate, DayLog>, date: ISODate): number | nul
 
 export const liftDates = (sessions: Session[]) => new Set(sessions.map((s) => isoDate(new Date(s.date))));
 
+/* ---------- food ---------- */
+
+export interface Totals {
+  kcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+  fibreG: number;
+}
+
+const MACROS = ["kcal", "proteinG", "fatG", "carbsG", "fibreG"] as const;
+
+export function sumFood(xs: Partial<Totals>[]): Totals {
+  const t = { kcal: 0, proteinG: 0, fatG: 0, carbsG: 0, fibreG: 0 };
+  for (const x of xs) for (const k of MACROS) t[k] += x[k] ?? 0;
+  for (const k of MACROS) t[k] = Math.round(t[k]);
+  return t;
+}
+
+// A day's entries in the order eaten.
+export const foodOn = (food: Record<string, FoodEntry>, date: ISODate) =>
+  Object.values(food).filter((f) => f.date === date && !f.deleted).sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
+
+// null when nothing is logged, so an empty day isn't scored as 0 kcal.
+export function dayTotals(food: Record<string, FoodEntry>, date: ISODate): Totals | null {
+  const es = foodOn(food, date);
+  return es.length ? sumFood(es) : null;
+}
+
+export const describedName = (items: MealItem[], text: string) => items.map((i) => i.name).join(", ") || text;
+
+// Before entries, a day held typed totals plus estimated meals. Ids are fixed so every device
+// migrates a day to the same entries.
+export function migrateLegacyFood(s: AppState): AppState {
+  let days = s.days, food = s.food;
+  for (const [date, log] of Object.entries(s.days) as [ISODate, LegacyDayLog][]) {
+    const { kcal, proteinG, fatG, carbsG, fibreG, meals, ...rest } = log;
+    if (kcal == null && proteinG == null && fatG == null && carbsG == null && fibreG == null && !meals) continue;
+    if (days === s.days) { days = { ...s.days }; food = { ...s.food }; }
+    for (const m of meals ?? []) {
+      const id = `mig-${date}-${m.id}`;
+      food[id] = { id, date, at: m.at, name: describedName(m.items, m.text), source: "described", text: m.text, items: m.items, ...sumFood(m.items), updatedAt: log.updatedAt };
+    }
+    const fromMeals = sumFood((meals ?? []).flatMap((m) => m.items));
+    const left = sumFood([{ kcal, proteinG, fatG, carbsG, fibreG }]);
+    for (const k of MACROS) left[k] = Math.max(0, left[k] - fromMeals[k]);
+    if (left.kcal > 0 || left.proteinG > 0) {
+      const id = `mig-${date}-rest`;
+      food[id] = { id, date, at: parseISO(date).getTime() + 12 * 3600000, name: "Earlier total", source: "manual", ...left, updatedAt: log.updatedAt };
+    }
+    days[date] = rest;
+  }
+  return days === s.days ? s : { ...s, days, food };
+}
+
+export const saveFood = (s: AppState, e: Omit<FoodEntry, "updatedAt">, now: number): AppState =>
+  ({ ...s, food: { ...s.food, [e.id]: { ...e, updatedAt: now } } });
+
+export const deleteFood = (s: AppState, id: string, now: number): AppState =>
+  s.food[id] ? { ...s, food: { ...s.food, [id]: { ...s.food[id], deleted: true, updatedAt: now } } } : s;
+
 /* ---------- daily score ---------- */
 
 export interface DayChecks {
@@ -59,10 +120,10 @@ export interface DayChecks {
   lifted: boolean;
 }
 
-export function dayChecks(t: CutTargets, log: DayLog | undefined, lifted: boolean): DayChecks {
+export function dayChecks(t: CutTargets, totals: Totals | null, log: DayLog | undefined, lifted: boolean): DayChecks {
   return {
-    kcal: log?.kcal == null ? null : Math.abs(log.kcal - t.kcal) <= 100,
-    protein: log?.proteinG == null ? null : log.proteinG >= t.proteinG,
+    kcal: totals == null ? null : Math.abs(totals.kcal - t.kcal) <= 100,
+    protein: totals == null ? null : totals.proteinG >= t.proteinG,
     steps: log?.steps == null ? null : log.steps >= t.stepsFloor,
     lifted: lifted || !!log?.lifted,
   };
@@ -77,23 +138,24 @@ export interface WeekSummary {
   lifts: number;
 }
 
-export function weekSummary(cut: CutSettings, days: Record<ISODate, DayLog>, lifts: Set<ISODate>, monday: ISODate, today: ISODate): WeekSummary {
+export function weekSummary(cut: CutSettings, s: Pick<AppState, "days" | "food">, lifts: Set<ISODate>, monday: ISODate, today: ISODate): WeekSummary {
   const dates: ISODate[] = [];
   for (let i = 0; i < 7 && addDays(monday, i) <= today; i++) dates.push(addDays(monday, i));
+  const totals = dates.map((d) => dayTotals(s.food, d));
   let hits = 0;
-  for (const d of dates) {
-    const c = dayChecks(cut.targets, days[d], lifts.has(d));
+  dates.forEach((d, i) => {
+    const c = dayChecks(cut.targets, totals[i], s.days[d], lifts.has(d));
     hits += Number(!!c.kcal) + Number(!!c.protein) + Number(!!c.steps);
-  }
-  const vals = (k: "kcal" | "proteinG" | "steps") => dates.map((d) => days[d]?.[k]).filter((v): v is number => v != null);
+  });
+  const logged = totals.filter((t): t is Totals => t != null);
   const round = (x: number | null) => (x == null ? null : Math.round(x));
   return {
     dates,
     adherence: dates.length ? hits / (dates.length * 3) : null,
-    avgKcal: round(mean(vals("kcal"))),
-    avgProtein: round(mean(vals("proteinG"))),
-    avgSteps: round(mean(vals("steps"))),
-    lifts: dates.filter((d) => lifts.has(d) || days[d]?.lifted).length,
+    avgKcal: round(mean(logged.map((t) => t.kcal))),
+    avgProtein: round(mean(logged.map((t) => t.proteinG))),
+    avgSteps: round(mean(dates.map((d) => s.days[d]?.steps).filter((v): v is number => v != null))),
+    lifts: dates.filter((d) => lifts.has(d) || s.days[d]?.lifted).length,
   };
 }
 

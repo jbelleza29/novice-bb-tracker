@@ -1,3 +1,4 @@
+import { migrateLegacyFood } from "./cut";
 import { PROGRAM, SLOT, STALL_LIMIT, TOP } from "./program";
 import type { AppState, Draft, DraftExercise, Kind, LoggedExercise, Session, Slot, SlotState, Units } from "./types";
 
@@ -12,11 +13,11 @@ const round2 = (x: number) => Math.round(x * 100) / 100;
 
 export const defaultState = (): AppState => ({
   v: 1, units: "kg", easeIn: true, variants: {}, settingsAt: 0, nextDay: 1, nextDayAt: 0, slots: {}, resetAt: 0,
-  cut: null, cutAt: 0, days: {}, checkins: {},
+  cut: null, cutAt: 0, days: {}, food: {}, checkins: {},
 });
 
 // Fills fields added after a state was first saved.
-export const withDefaults = (s: AppState): AppState => ({ ...defaultState(), ...s });
+export const withDefaults = (s: AppState): AppState => migrateLegacyFood({ ...defaultState(), ...s });
 
 export const newSlotState = (units: Units): SlotState => ({
   weight: null, mode: "linear", holds: 0, count: 0, inc: null, reason: "", kind: "new", units, updatedAt: 0,
