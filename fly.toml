@@ -1,0 +1,19 @@
+# App names are global on Fly; change this if it's taken.
+app = "novice-bb-tracker"
+primary_region = "yyz"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+# SQLite lives here, so run exactly one machine
+[[mounts]]
+  source = "nbt_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

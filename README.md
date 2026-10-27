@@ -40,6 +40,19 @@ NBT_PASSCODE='long passphrase' ./bin/nbt     # serves app + API on :8080
 
 Put it behind HTTPS (Fly.io, Caddy, etc). The session cookie is marked `Secure` when the request arrives over HTTPS or with `X-Forwarded-Proto: https`.
 
+### Deploy to Fly.io
+
+One machine with a 1 GB volume for SQLite. It sleeps when idle and wakes on the next request.
+
+```bash
+brew install flyctl
+fly auth login
+fly apps create novice-bb-tracker          # name must match fly.toml
+fly volumes create nbt_data --size 1 --region yyz --yes
+fly secrets set NBT_PASSCODE='long passphrase'
+fly deploy --ha=false
+```
+
 ## Sync model
 
 - Workouts are append-only and upload by id, so retries are safe.
