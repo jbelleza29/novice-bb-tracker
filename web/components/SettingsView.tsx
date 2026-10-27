@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { editSlot, fmt, incFor, num, slotStateOf, switchUnits, variantOf } from "@/lib/engine";
+import { editSlot, incFor, slotStateOf, switchUnits, variantOf } from "@/lib/engine";
+import { exportCSV, exportJSON } from "@/lib/export";
+import CutForm from "./CutForm";
+import NumField from "./NumField";
 import { PROGRAM, TOP } from "@/lib/program";
 import { store, type Snapshot } from "@/lib/store";
 import type { Draft, Mode, SlotState } from "@/lib/types";
@@ -98,17 +100,14 @@ export default function SettingsView({ snap, onSignIn }: { snap: Snapshot; onSig
                     <NumField
                       value={st.weight}
                       placeholder="Not set"
-                      onChange={(text) =>
-                        setSlot(slot.id, d.day, { weight: text.trim() === "" ? null : num(text), reason: "Load set manually.", kind: "new" })
-                      }
+                      onChange={(n) => setSlot(slot.id, d.day, { weight: n, reason: "Load set manually.", kind: "new" })}
                     />
                   </label>
                   <label>
                     Jump size ({u})
                     <NumField
                       value={incFor(st, slot, u)}
-                      onChange={(text) => {
-                        const n = num(text);
+                      onChange={(n) => {
                         if (n && n > 0) setSlot(slot.id, d.day, { inc: n });
                       }}
                     />
@@ -127,6 +126,23 @@ export default function SettingsView({ snap, onSignIn }: { snap: Snapshot; onSig
         </div>
       ))}
 
+      {state.cut && (
+        <div className="card">
+          <h3>Cut</h3>
+          <p>Your numbers for the weight-loss phase. Weekly check-ins adjust calories and steps here.</p>
+          <CutForm cut={state.cut} onChange={(p) => store.updateState((s, now) => (s.cut ? { ...s, cut: { ...s.cut, ...p }, cutAt: now } : s))} />
+        </div>
+      )}
+
+      <div className="card">
+        <h3>Export</h3>
+        <p>Download a copy of your data.</p>
+        <div className="toggles" style={{ marginTop: 0 }}>
+          <button onClick={() => exportCSV(state, snap.sessions)}>Daily log (CSV)</button>
+          <button onClick={() => exportJSON(state, snap.sessions)}>Everything (JSON)</button>
+        </div>
+      </div>
+
       <div className="card">
         <h3>Start over</h3>
         <p>Deletes every logged workout and all saved loads{signedIn ? " on all your devices" : ""}. This can’t be undone.</p>
@@ -140,26 +156,5 @@ export default function SettingsView({ snap, onSignIn }: { snap: Snapshot; onSig
         </button>
       </div>
     </>
-  );
-}
-
-// Keeps the typed text (e.g. "62.") while the stored number is 62; resyncs when the number changes elsewhere.
-function NumField({ value, placeholder, onChange }: { value: number | null; placeholder?: string; onChange: (text: string) => void }) {
-  const [text, setText] = useState(fmt(value));
-  const [seen, setSeen] = useState(value);
-  if (value !== seen) {
-    setSeen(value);
-    if (num(text) !== value) setText(fmt(value));
-  }
-  return (
-    <input
-      inputMode="decimal"
-      value={text}
-      placeholder={placeholder}
-      onChange={(e) => {
-        setText(e.target.value);
-        onChange(e.target.value);
-      }}
-    />
   );
 }

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { api, ApiError, type RemoteState } from "./api";
-import { defaultState, resetState } from "./engine";
+import { defaultState, resetState, withDefaults } from "./engine";
 import { mergeSessions, mergeState } from "./merge";
 import type { AppState, Draft, Session } from "./types";
 
@@ -49,7 +49,7 @@ class TrackerStore {
     if (this.snap) return;
     const state = LS.get<AppState>(K.state);
     this.snap = {
-      state: state?.v === 1 ? state : defaultState(),
+      state: state?.v === 1 ? withDefaults(state) : defaultState(),
       sessions: LS.get<Session[]>(K.sessions) ?? [],
       drafts: LS.get<Record<number, Draft>>(K.drafts) ?? {},
       sync: "idle",

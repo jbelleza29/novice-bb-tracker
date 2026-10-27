@@ -45,6 +45,68 @@ export interface AppState {
   nextDayAt: number;
   slots: Record<string, SlotState>;
   resetAt: number;
+  cut: CutSettings | null; // null until the cut setup form is filled in
+  cutAt: number;
+  days: Record<ISODate, DayLog>;
+  checkins: Record<ISODate, CheckIn>;
+}
+
+export type ISODate = string; // local calendar date, "2026-10-27"
+
+export interface CutTargets {
+  kcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+  fibreG: number;
+  stepsFloor: number;
+  stepsGoal: number;
+  liftsPerWeek: number;
+}
+
+// Weight-loss phase. Always metric.
+export interface CutSettings {
+  heightCm: number;
+  age: number;
+  sex: "male" | "female";
+  activityFactor: number;
+  startDate: ISODate;
+  goalDate: ISODate;
+  startWeightKg: number;
+  goalWeightKg: number;
+  goalBandKg: [number, number];
+  targets: CutTargets;
+}
+
+export interface DayLog {
+  weightKg?: number;
+  kcal?: number;
+  proteinG?: number;
+  fatG?: number;
+  carbsG?: number;
+  fibreG?: number;
+  steps?: number;
+  lifted?: boolean; // manual tick; logged workouts count automatically
+  sleepHours?: number;
+  lateNight?: boolean;
+  hunger?: number; // 1–5, 5 = very hungry
+  workFocus?: number; // 1–5, 5 = sharp
+  ateOut?: boolean;
+  notes?: string;
+  updatedAt: number;
+}
+
+export type Decision =
+  | { action: "hold"; reason: string }
+  | { action: "decrease"; lever: "kcal" | "steps"; amount: number; reason: string }
+  | { action: "increase"; kcalDelta: number; reason: string };
+
+export interface CheckIn {
+  weekStart: ISODate; // Monday
+  avgWeightKg: number | null;
+  waistCm?: number;
+  decision: Decision | null; // what was applied; null until accepted or overridden
+  updatedAt: number;
 }
 
 export interface DraftSet {

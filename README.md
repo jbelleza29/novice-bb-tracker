@@ -7,7 +7,8 @@ Mobile-first workout log for the [Ripped Body Novice Bodybuilding Program](https
 - `web/` – Next.js + TypeScript. Builds to static files.
   - `lib/engine.ts` – progression engine (linear, then rep-range once an exercise stalls 3 times)
   - `lib/store.ts` – local-first store: localStorage first, syncs to the API when signed in
-  - `lib/merge.ts` – sync merge: newest wins per exercise slot and per settings group
+  - `lib/merge.ts` – sync merge: newest wins per exercise slot, day log, check-in and settings group
+  - `lib/cut.ts` – Cut tab: 7-day average, Monday check-in rules, projection to the goal date
 - `api/` – Go server. SQLite storage, passcode sign-in, and serves the built frontend from the same binary.
 
 ## Develop
@@ -59,6 +60,7 @@ fly deploy --ha=false
 - Program state is one JSON document with a version number. A write based on an old version gets a 409 and the current copy; the client merges and retries.
 - In-progress workouts (drafts) stay on the device.
 - "Delete all data" stamps a reset time; anything older is dropped on every device at its next sync.
+- Cut day logs and check-ins live in the state document, keyed by date.
 
 ## Known limitations
 

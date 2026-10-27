@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { store, useTracker, type SyncStatus } from "@/lib/store";
 import type { Result } from "@/lib/engine";
+import CutView from "./CutView";
 import HistoryView from "./HistoryView";
 import RestTimer, { type Timer } from "./RestTimer";
 import SettingsView from "./SettingsView";
 import { LoginSheet, SummarySheet } from "./Sheets";
 import WorkoutView from "./WorkoutView";
 
-type View = "workout" | "history" | "settings";
+type View = "workout" | "cut" | "history" | "settings";
 
 const SYNC_TEXT: Record<SyncStatus, string> = {
   idle: "",
@@ -51,7 +52,7 @@ export default function Tracker() {
             )}
           </div>
           <nav className="nav" aria-label="Sections">
-            {(["workout", "history", "settings"] as const).map((v) => (
+            {(["workout", "cut", "history", "settings"] as const).map((v) => (
               <button key={v} aria-current={view === v ? "page" : undefined} onClick={() => go(v)}>
                 {v[0].toUpperCase() + v.slice(1)}
               </button>
@@ -72,6 +73,8 @@ export default function Tracker() {
             onStopRest={() => setTimer(null)}
             onFinished={(s) => { setTimer(null); setDay(s.day); setSummary(s); }}
           />
+        ) : view === "cut" ? (
+          <CutView snap={snap} />
         ) : view === "history" ? (
           <HistoryView sessions={snap.sessions} checkin={checkin} onCheckin={setCheckin} />
         ) : (
