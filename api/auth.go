@@ -14,33 +14,33 @@ import (
 const (
 	cookieName = "nbt_session"
 	tokenTTL   = 400 * 24 * time.Hour // browsers cap cookie lifetime at 400 days
-	maxFails   = 10
-	failWindow = 15 * time.Minute
 )
 
-// Global, not per-IP: there is one account, so a lockout only slows guessing.
+// Counts events in a sliding window. Global, not per-IP: there is one account.
 type limiter struct {
-	mu    sync.Mutex
-	fails []time.Time
+	max    int
+	window time.Duration
+	mu     sync.Mutex
+	events []time.Time
 }
 
 func (l *limiter) allow() bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	cutoff := time.Now().Add(-failWindow)
-	kept := l.fails[:0]
-	for _, t := range l.fails {
+	cutoff := time.Now().Add(-l.window)
+	kept := l.events[:0]
+	for _, t := range l.events {
 		if t.After(cutoff) {
 			kept = append(kept, t)
 		}
 	}
-	l.fails = kept
-	return len(l.fails) < maxFails
+	l.events = kept
+	return len(l.events) < l.max
 }
 
-func (l *limiter) fail() {
+func (l *limiter) record() {
 	l.mu.Lock()
-	l.fails = append(l.fails, time.Now())
+	l.events = append(l.events, time.Now())
 	l.mu.Unlock()
 }
 
@@ -66,7 +66,7 @@ func (s *server) login(w http.ResponseWriter, r *http.Request) {
 	}
 	sum := sha256.Sum256([]byte(req.Passcode))
 	if subtle.ConstantTimeCompare(sum[:], s.passcode[:]) != 1 {
-		s.limits.fail()
+		s.limits.record()
 		writeError(w, http.StatusUnauthorized, "wrong passcode")
 		return
 	}

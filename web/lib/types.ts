@@ -93,7 +93,25 @@ export interface DayLog {
   workFocus?: number; // 1–5, 5 = sharp
   ateOut?: boolean;
   notes?: string;
+  meals?: Meal[]; // estimated meals; their totals are already added to the fields above
   updatedAt: number;
+}
+
+export interface MealItem {
+  name: string;
+  portion: string;
+  kcal: number;
+  proteinG: number;
+  fatG: number;
+  carbsG: number;
+  fibreG: number;
+}
+
+export interface Meal {
+  id: string;
+  text: string;
+  items: MealItem[];
+  at: number;
 }
 
 export type Decision =

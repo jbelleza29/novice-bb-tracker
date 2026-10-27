@@ -1,4 +1,4 @@
-import type { AppState, Session } from "./types";
+import type { AppState, MealItem, Session } from "./types";
 
 export class ApiError extends Error {
   constructor(public status: number, public body: unknown) {
@@ -32,4 +32,5 @@ export const api = {
   getSessions: () => call<{ sessions: Session[] }>("GET", "/sessions").then((r) => r.sessions),
   putSession: (s: Session) => call<null>("PUT", "/sessions/" + encodeURIComponent(s.id), s),
   deleteSessionsBefore: (iso: string) => call<null>("DELETE", "/sessions?before=" + encodeURIComponent(iso)),
+  estimate: (text: string) => call<{ items: MealItem[]; note: string }>("POST", "/estimate", { text }),
 };

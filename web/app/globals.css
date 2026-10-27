@@ -214,3 +214,14 @@ details summary{cursor:pointer;color:var(--muted);font-size:14px;margin-top:10px
 .tips li{margin-bottom:6px;font-size:14.5px}
 .tips ul{padding-left:18px;margin:6px 0 0}
 .hint{font-size:12.5px;color:var(--muted);margin-top:2px}
+.meal-item{display:grid;grid-template-columns:minmax(0,1fr) 64px 64px 32px;gap:8px;align-items:end;padding:8px 0;border-top:1px solid var(--line)}
+.meal-item:first-of-type{border-top:0}
+.meal-name b{display:block;font-size:15.5px;line-height:1.25}
+.meal-name span{font-size:13px;color:var(--muted)}
+.meal-item label{font-size:11.5px;color:var(--muted)}
+.meal-item input{display:block;width:100%;height:38px;margin-top:2px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:0 6px;font-family:var(--num);font-size:19px;font-weight:600}
+.meal-item > button,.meals button{width:32px;height:38px;border:0;background:none;color:var(--muted);font-size:22px}
+.meal-total{margin:10px 0 0;font-size:14.5px;font-weight:600}
+.meals{list-style:none;padding:0;margin:14px 0 0}
+.meals li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+.meals small{display:block;color:var(--muted);font-size:13px}

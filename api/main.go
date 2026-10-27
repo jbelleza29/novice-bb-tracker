@@ -23,13 +23,21 @@ func main() {
 	}
 	defer db.Close()
 
-	s := &server{db: db, passcode: sha256.Sum256([]byte(passcode))}
+	s := &server{
+		db:       db,
+		passcode: sha256.Sum256([]byte(passcode)),
+		limits:   limiter{max: 10, window: 15 * time.Minute},
+		est:      newEstimator(),
+	}
+	if s.est != nil {
+		log.Printf("meal estimates on, model %s", s.est.model)
+	}
 	srv := &http.Server{
 		Addr:              env("NBT_ADDR", ":8080"),
 		Handler:           s.routes(),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
+		WriteTimeout:      100 * time.Second, // meal estimates can take a while
 		IdleTimeout:       2 * time.Minute,
 	}
 

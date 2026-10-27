@@ -1,6 +1,7 @@
 import { addDays, dayChecks, liftDates, parseISO, RICE_CUP, todayISO } from "@/lib/cut";
 import { store, type Snapshot } from "@/lib/store";
 import type { CutSettings, DayLog, ISODate } from "@/lib/types";
+import MealEstimate from "./MealEstimate";
 import NumField from "./NumField";
 
 type NumKey = "weightKg" | "kcal" | "proteinG" | "fatG" | "carbsG" | "fibreG" | "steps" | "sleepHours";
@@ -103,6 +104,8 @@ export default function CutToday({ snap, cut, date, onDate }: {
           </div>
         </details>
       </div>
+
+      <MealEstimate date={date} log={log} onUpdate={updateDay} />
 
       <div className="card">
         <h3>{label === "Today" ? "Today so far" : label}</h3>

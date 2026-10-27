@@ -38,6 +38,8 @@ NBT_PASSCODE='long passphrase' ./bin/nbt     # serves app + API on :8080
 | `NBT_PASSCODE` | required | Sign-in passcode. Use a long one; logins are limited to 10 failures per 15 min. |
 | `NBT_DB` | `nbt.db` | SQLite file path |
 | `NBT_ADDR` | `:8080` | Listen address |
+| `ANTHROPIC_API_KEY` | unset | Turns on "Describe a meal" estimates in the Cut tab |
+| `NBT_MODEL` | `claude-opus-5-5` | Claude model for meal estimates |
 
 Put it behind HTTPS (Fly.io, Caddy, etc). The session cookie is marked `Secure` when the request arrives over HTTPS or with `X-Forwarded-Proto: https`.
 
@@ -51,6 +53,7 @@ fly auth login
 fly apps create novice-bb-tracker          # name must match fly.toml
 fly volumes create nbt_data --size 1 --region yyz --yes
 fly secrets set NBT_PASSCODE='long passphrase'
+fly secrets set ANTHROPIC_API_KEY='sk-ant-...'   # optional, for meal estimates
 fly deploy --ha=false
 ```
 
