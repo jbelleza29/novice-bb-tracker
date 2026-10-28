@@ -1,16 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { addDays, applyDecision, avg7, checkpoint, checkpointInput, CUT_PREFILL, dayTotals, foodOn, migrateLegacyFood, mondayOf, projection, weekSummary } from "./cut";
+import { addDays, applyDecision, avg7, checkpoint, checkpointInput, completeCut, cutDraft, dayTotals, foodOn, migrateLegacyFood, mondayOf, projection, weekSummary } from "./cut";
 import { defaultState, withDefaults } from "./engine";
 import { mergeState } from "./merge";
-import type { AppState, DayLog, FoodEntry, LegacyDayLog } from "./types";
+import type { AppState, CutSettings, DayLog, FoodEntry, LegacyDayLog } from "./types";
 
-const cut = CUT_PREFILL; // starts Tue 2026-10-27
+const cut: CutSettings = {
+  heightCm: 175, age: 32, sex: "male", activityFactor: 1.45,
+  startDate: "2026-10-27", goalDate: "2026-12-15", // Tue start
+  startWeightKg: 85, goalWeightKg: 78, goalBandKg: [77, 79],
+  targets: { kcal: 1800, proteinG: 160, fatG: 55, carbsG: 150, fibreG: 30, stepsFloor: 10000, stepsGoal: 12000, liftsPerWeek: 4 },
+};
 const entry = (id: string, date: string, kcal: number, proteinG: number, extra: Partial<FoodEntry> = {}): FoodEntry =>
   ({ id, date, at: 1, name: id, source: "manual", kcal, proteinG, updatedAt: 1, ...extra });
 const weigh = (entries: Record<string, number>) =>
   Object.fromEntries(Object.entries(entries).map(([d, w]) => [d, { weightKg: w, updatedAt: 1 } as DayLog]));
 // 7 straight days of weigh-ins ending on `end`, all at `kg`
 const week = (end: string, kg: number) => weigh(Object.fromEntries(Array.from({ length: 7 }, (_, i) => [addDays(end, -i), kg])));
+
+describe("cut setup", () => {
+  it("starts with personal fields empty and only completes when all are filled", () => {
+    const d = cutDraft("2026-11-01");
+    expect(d.heightCm).toBeNull();
+    expect(d.startWeightKg).toBeNull();
+    expect(d.targets.kcal).toBeNull();
+    expect(completeCut(d)).toBeNull();
+    expect(completeCut({ ...cut, goalDate: "2026-10-01" })).toBeNull();
+    expect(completeCut(cut)).toEqual(cut);
+  });
+});
 
 describe("avg7", () => {
   it("averages what's there when at least 4 weigh-ins exist", () => {

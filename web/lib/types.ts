@@ -79,6 +79,13 @@ export interface CutSettings {
   targets: CutTargets;
 }
 
+type Blank<T> = { [K in keyof T]: T[K] | null };
+// Setup form state: personal fields start empty.
+export type CutDraft = Blank<Omit<CutSettings, "goalBandKg" | "targets">> & {
+  goalBandKg: [number | null, number | null];
+  targets: Blank<CutTargets>;
+};
+
 export interface DayLog {
   weightKg?: number;
   weighedAt?: number;

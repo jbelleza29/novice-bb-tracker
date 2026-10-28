@@ -1,3 +1,4 @@
+import { completeCut } from "@/lib/cut";
 import { editSlot, incFor, slotStateOf, switchUnits, variantOf } from "@/lib/engine";
 import { exportCSV, exportJSON } from "@/lib/export";
 import CutForm from "./CutForm";
@@ -130,7 +131,10 @@ export default function SettingsView({ snap, onSignIn }: { snap: Snapshot; onSig
         <div className="card">
           <h3>Cut</h3>
           <p>Your numbers for the weight-loss phase. Weekly check-ins adjust calories and steps here.</p>
-          <CutForm cut={state.cut} onChange={(p) => store.updateState((s, now) => (s.cut ? { ...s, cut: { ...s.cut, ...p }, cutAt: now } : s))} />
+          <CutForm cut={state.cut} onChange={(p) => store.updateState((s, now) => {
+            const next = s.cut && completeCut({ ...s.cut, ...p });
+            return next ? { ...s, cut: next, cutAt: now } : s;
+          })} />
         </div>
       )}
 

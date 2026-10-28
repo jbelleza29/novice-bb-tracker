@@ -1,21 +1,23 @@
-import type { AppState, CutSettings, CutTargets, DayLog, Decision, FoodEntry, ISODate, LegacyDayLog, MealItem, Session } from "./types";
+import type { AppState, CutDraft, CutSettings, CutTargets, DayLog, Decision, FoodEntry, ISODate, LegacyDayLog, MealItem, Session } from "./types";
 
 export const KCAL_FLOOR = 1600;
 export const RICE_CUP = { name: "Rice, 1 cup cooked", kcal: 200, proteinG: 4, carbsG: 45, fibreG: 1 };
 
-// Prefill for the setup form only; the user confirms or edits every value.
-export const CUT_PREFILL: CutSettings = {
-  heightCm: 175,
-  age: 32,
-  sex: "male",
-  activityFactor: 1.45,
-  startDate: "2026-10-27",
-  goalDate: "2026-12-15",
-  startWeightKg: 85,
-  goalWeightKg: 78,
-  goalBandKg: [77, 79],
-  targets: { kcal: 1800, proteinG: 160, fatG: 55, carbsG: 150, fibreG: 30, stepsFloor: 10000, stepsGoal: 12000, liftsPerWeek: 4 },
-};
+// Only general defaults; anything personal starts empty.
+export const cutDraft = (today: ISODate): CutDraft => ({
+  heightCm: null, age: null, sex: null, activityFactor: 1.45,
+  startDate: today, goalDate: null,
+  startWeightKg: null, goalWeightKg: null, goalBandKg: [null, null],
+  targets: { kcal: null, proteinG: null, fatG: null, carbsG: null, fibreG: 30, stepsFloor: 10000, stepsGoal: 12000, liftsPerWeek: 4 },
+});
+
+export function completeCut(d: CutDraft): CutSettings | null {
+  const { goalBandKg: [lo, hi], targets: t, ...rest } = d;
+  if (Object.values(rest).some((v) => v == null || v === "") || lo == null || hi == null) return null;
+  if (Object.values(t).some((v) => v == null)) return null;
+  if (d.goalDate! <= d.startDate! || lo > hi) return null;
+  return { ...(rest as Omit<CutSettings, "goalBandKg" | "targets">), goalBandKg: [lo, hi], targets: t as CutTargets };
+}
 
 /* ---------- dates (local calendar days) ---------- */
 const pad = (n: number) => String(n).padStart(2, "0");

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { CUT_PREFILL, todayISO } from "@/lib/cut";
+import { completeCut, cutDraft, todayISO } from "@/lib/cut";
 import { store, type Snapshot } from "@/lib/store";
-import type { CutSettings } from "@/lib/types";
+import type { CutDraft } from "@/lib/types";
 import CutForm from "./CutForm";
 import CutToday from "./CutToday";
 import CutTrend from "./CutTrend";
@@ -32,19 +32,22 @@ export default function CutView({ snap }: { snap: Snapshot }) {
 }
 
 function CutSetup() {
-  const [draft, setDraft] = useState<CutSettings>(CUT_PREFILL);
+  const [draft, setDraft] = useState<CutDraft>(() => cutDraft(todayISO()));
+  const ready = completeCut(draft);
   return (
     <div className="card">
       <h3>Set up your cut</h3>
-      <p>Check each number. They drive your targets, chart and weekly check-ins, and you can change them later in Settings.</p>
+      <p>Fill in each number. They drive your targets, chart and weekly check-ins, and you can change them later in Settings.</p>
       <CutForm cut={draft} onChange={(p) => setDraft({ ...draft, ...p })} />
       <button
         className="primary"
         style={{ marginTop: 12 }}
-        onClick={() => store.updateState((s, now) => ({ ...s, cut: draft, cutAt: now }))}
+        disabled={!ready}
+        onClick={() => ready && store.updateState((s, now) => ({ ...s, cut: ready, cutAt: now }))}
       >
         Start tracking
       </button>
+      {!ready && <p className="note">Fill in every field. The goal date must be after the start date.</p>}
     </div>
   );
 }
