@@ -3,7 +3,9 @@ import { addDays, dayChecks, dayTotals, foodOn, liftDates, parseISO, todayISO } 
 import { fmt } from "@/lib/engine";
 import { store, type Snapshot } from "@/lib/store";
 import type { CutSettings, DayLog, FoodEntry, ISODate } from "@/lib/types";
+import { dayRecap, daySummary } from "@/lib/recap";
 import { DescribeSheet, FoodSheet, ValueSheet } from "./CutSheets";
+import InsightBox from "./InsightBox";
 import NumField from "./NumField";
 
 type Open = null | { kind: "weight" } | { kind: "steps" } | { kind: "describe" } | { kind: "food"; entry?: FoodEntry };
@@ -27,6 +29,8 @@ export default function CutToday({ snap, cut, date, onDate }: {
   const t = cut.targets;
   const workout = liftDates(snap.sessions).has(date);
   const c = dayChecks(t, totals, log, workout);
+  const recap = dayRecap(snap.state, snap.sessions, date);
+  const summary = daySummary(snap.state, snap.sessions, date);
   const label = date === today ? "Today" : date === addDays(today, -1) ? "Yesterday"
     : parseISO(date).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 
@@ -107,13 +111,15 @@ export default function CutToday({ snap, cut, date, onDate }: {
       </section>
 
       <div className="card">
-        <h3>{label === "Today" ? "Today so far" : label}</h3>
+        <h3>{label === "Today" ? "Day recap so far" : "Day recap"}</h3>
         <div className="checks">
           <div className={cls(c.kcal, "kcal")}><b>{mark(c.kcal, "kcal")}</b>kcal ±100</div>
           <div className={cls(c.protein, "protein")}><b>{mark(c.protein, "protein")}</b>protein</div>
           <div className={cls(c.steps, "steps")}><b>{mark(c.steps, "steps")}</b>{(t.stepsFloor / 1000).toLocaleString()}k steps</div>
           <div className={c.lifted ? "yes" : ""}><b>{c.lifted ? "✓" : "–"}</b>lifted</div>
         </div>
+        <ul className="recap">{recap.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
+        <InsightBox kind="daily" period={date} summary={summary} />
       </div>
 
       <div className="card">

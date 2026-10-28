@@ -17,6 +17,7 @@ type server struct {
 	passcode [32]byte
 	limits   limiter
 	est      *estimator
+	ins      *insighter
 }
 
 // Matches JS Date.toISOString(), so stored dates sort correctly as text.
@@ -34,6 +35,8 @@ func (s *server) routes() http.Handler {
 	mux.Handle("PUT /api/sessions/{id}", s.auth(s.putSession))
 	mux.Handle("DELETE /api/sessions", s.auth(s.deleteSessions))
 	mux.Handle("POST /api/estimate", s.auth(s.estimate))
+	mux.Handle("GET /api/insight", s.auth(s.getInsight))
+	mux.Handle("POST /api/insight", s.auth(s.postInsight))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "not found")
 	})

@@ -120,3 +120,18 @@ describe("food entries", () => {
     expect(foodOn(mergeState(laptop, phone).food, "2026-11-01").map((f) => f.id)).toEqual(["a", "c"]);
   });
 });
+
+describe("day recap", () => {
+  it("states totals against targets and the protein gap", async () => {
+    const { dayRecap, daySummary } = await import("./recap");
+    const s = { ...defaultState(), cut, days: { "2026-11-01": { steps: 10500, weightKg: 84.6, updatedAt: 1 } },
+      food: { a: entry("a", "2026-11-01", 700, 55, { at: new Date(2026, 10, 1, 13, 5).getTime() }), b: entry("b", "2026-11-01", 1050, 60, { at: new Date(2026, 10, 1, 19, 40).getTime() }) } };
+    const r = dayRecap(s, [], "2026-11-01");
+    expect(r.lines).toContain("1,750 of 1,800 kcal, on target.");
+    expect(r.lines).toContain("Protein 115 of 160 g, 45 g short.");
+    expect(r.lines).toContain("10,500 steps: floor met, 1,500 short of the goal.");
+    const sent = JSON.parse(daySummary(s, [], "2026-11-01"));
+    expect(sent.food).toEqual([["13:05", "a", 700, 55], ["19:40", "b", 1050, 60]]);
+    expect(sent.totals).toEqual({ kcal: 1750, protein: 115, fat: null, carbs: null, fibre: null });
+  });
+});

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { addDays, applyDecision, checkpoint, checkpointInput, liftDates, mondayOf, parseISO, tdee, todayISO, weekSummary } from "@/lib/cut";
 import { store, type Snapshot } from "@/lib/store";
 import type { CheckIn, CutSettings, Decision, ISODate } from "@/lib/types";
+import { weekSummaryForAI } from "@/lib/recap";
+import InsightBox from "./InsightBox";
 import NumField from "./NumField";
 
 const short = (d: ISODate) => parseISO(d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
@@ -61,6 +63,14 @@ export default function CutWeek({ snap, cut }: { snap: Snapshot; cut: CutSetting
           <div><b>{s.lifts} / {cut.targets.liftsPerWeek}</b><span>lifting sessions</span></div>
         </div>
       </div>
+
+      {inCut && (
+        <div className="card">
+          <h3>Week insight</h3>
+          <p>Patterns across the days so far, written by Claude when you ask.</p>
+          <InsightBox kind="weekly" period={monday} summary={weekSummaryForAI(snap.state, snap.sessions, monday, today)} />
+        </div>
+      )}
 
       {inCut && (
         <div className="card">

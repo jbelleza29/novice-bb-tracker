@@ -24,6 +24,19 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
   return data as T;
 }
 
+export interface Insight {
+  text: string;
+  model: string;
+  summaryHash: string;
+  createdAt: number;
+  nextAt: number;
+}
+
+export interface InsightReply {
+  insight: Insight | null;
+  enabled: boolean;
+}
+
 export const api = {
   login: (passcode: string) => call<null>("POST", "/login", { passcode }),
   logout: () => call<null>("POST", "/logout"),
@@ -32,5 +45,8 @@ export const api = {
   getSessions: () => call<{ sessions: Session[] }>("GET", "/sessions").then((r) => r.sessions),
   putSession: (s: Session) => call<null>("PUT", "/sessions/" + encodeURIComponent(s.id), s),
   deleteSessionsBefore: (iso: string) => call<null>("DELETE", "/sessions?before=" + encodeURIComponent(iso)),
+  getInsight: (kind: string, period: string) =>
+    call<InsightReply>("GET", `/insight?kind=${kind}&period=${period}`),
+  requestInsight: (kind: string, period: string, summary: string) => call<InsightReply>("POST", "/insight", { kind, period, summary }),
   estimate: (text: string) => call<{ items: MealItem[]; note: string }>("POST", "/estimate", { text }),
 };

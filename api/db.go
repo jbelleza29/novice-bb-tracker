@@ -19,6 +19,16 @@ CREATE TABLE IF NOT EXISTS sessions (
 	data TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sessions_date ON sessions (date);
+CREATE TABLE IF NOT EXISTS insights (
+	id           INTEGER PRIMARY KEY,
+	kind         TEXT    NOT NULL,
+	period       TEXT    NOT NULL,
+	text         TEXT    NOT NULL,
+	model        TEXT    NOT NULL,
+	summary_hash TEXT    NOT NULL,
+	created_at   INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS insights_kind_period ON insights (kind, period, created_at);
 CREATE TABLE IF NOT EXISTS auth_tokens (
 	hash       TEXT    PRIMARY KEY,
 	created_at INTEGER NOT NULL

@@ -246,3 +246,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:14px;margin-top:10px
 .breakdown li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--line)}
 .breakdown small{display:block;font-size:12.5px;color:var(--muted)}
 .danger-text{color:var(--red)}
+.recap{margin:12px 0 0;padding-left:18px;font-size:14.5px}
+.recap li{margin-bottom:3px}
+.insight{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.insight ul{margin:0 0 6px;padding-left:18px;font-size:15px}
+.insight li{margin-bottom:6px}
+.insight-meta{font-size:12.5px;color:var(--muted);margin:4px 0 8px}

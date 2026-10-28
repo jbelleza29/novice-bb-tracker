@@ -28,9 +28,13 @@ func main() {
 		passcode: sha256.Sum256([]byte(passcode)),
 		limits:   limiter{max: 10, window: 15 * time.Minute},
 		est:      newEstimator(),
+		ins:      newInsighter(),
 	}
 	if s.est != nil {
 		log.Printf("meal estimates on, model %s", s.est.model)
+	}
+	if s.ins != nil {
+		log.Printf("insights on, daily %s, weekly %s", s.ins.kinds["daily"].model, s.ins.kinds["weekly"].model)
 	}
 	srv := &http.Server{
 		Addr:              env("NBT_ADDR", ":8080"),
