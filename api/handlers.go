@@ -15,7 +15,8 @@ import (
 type server struct {
 	db       *sql.DB
 	passcode [32]byte
-	limits   limiter
+	limits   limiter // wrong passcodes from everyone; backstop for many IPs
+	ipLimits ipLimiter
 	est      *estimator
 	ins      *insighter
 }

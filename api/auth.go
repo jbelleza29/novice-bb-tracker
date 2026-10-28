@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -16,7 +17,7 @@ const (
 	tokenTTL   = 400 * 24 * time.Hour // browsers cap cookie lifetime at 400 days
 )
 
-// Counts events in a sliding window. Global, not per-IP: there is one account.
+// Counts events in a sliding window.
 type limiter struct {
 	max    int
 	window time.Duration
@@ -44,6 +45,40 @@ func (l *limiter) record() {
 	l.mu.Unlock()
 }
 
+// One limiter per client IP, so one visitor's wrong guesses don't lock out everyone.
+type ipLimiter struct {
+	max    int
+	window time.Duration
+	mu     sync.Mutex
+	byIP   map[string]*limiter
+}
+
+func (l *ipLimiter) get(ip string) *limiter {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.byIP == nil || len(l.byIP) > 10000 {
+		l.byIP = map[string]*limiter{}
+	}
+	lim := l.byIP[ip]
+	if lim == nil {
+		lim = &limiter{max: l.max, window: l.window}
+		l.byIP[ip] = lim
+	}
+	return lim
+}
+
+// Fly's proxy sets Fly-Client-IP; elsewhere use the socket address.
+func clientIP(r *http.Request) string {
+	if ip := r.Header.Get("Fly-Client-IP"); ip != "" {
+		return ip
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
 func hashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
@@ -60,12 +95,14 @@ func (s *server) login(w http.ResponseWriter, r *http.Request) {
 	if !readJSON(w, r, &req, 4<<10) {
 		return
 	}
-	if !s.limits.allow() {
+	ipLim := s.ipLimits.get(clientIP(r))
+	if !ipLim.allow() || !s.limits.allow() {
 		writeError(w, http.StatusTooManyRequests, "too many attempts, try again later")
 		return
 	}
 	sum := sha256.Sum256([]byte(req.Passcode))
 	if subtle.ConstantTimeCompare(sum[:], s.passcode[:]) != 1 {
+		ipLim.record()
 		s.limits.record()
 		writeError(w, http.StatusUnauthorized, "wrong passcode")
 		return

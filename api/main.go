@@ -26,7 +26,8 @@ func main() {
 	s := &server{
 		db:       db,
 		passcode: sha256.Sum256([]byte(passcode)),
-		limits:   limiter{max: 10, window: 15 * time.Minute},
+		limits:   limiter{max: 100, window: 15 * time.Minute},
+		ipLimits: ipLimiter{max: 10, window: 15 * time.Minute},
 		est:      newEstimator(),
 		ins:      newInsighter(),
 	}

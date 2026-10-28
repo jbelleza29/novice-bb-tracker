@@ -37,7 +37,7 @@ NBT_PASSCODE='long passphrase' ./bin/nbt     # serves app + API on :8080
 
 | Env | Default | |
 |---|---|---|
-| `NBT_PASSCODE` | required | Sign-in passcode. Use a long one; logins are limited to 10 failures per 15 min. |
+| `NBT_PASSCODE` | required | Sign-in passcode. Use a long one; logins are limited to 10 failures per IP and 100 overall per 15 min. |
 | `NBT_DB` | `nbt.db` | SQLite file path |
 | `NBT_ADDR` | `:8080` | Listen address |
 | `ANTHROPIC_API_KEY` | unset | Turns on "Describe a meal" estimates in the Cut tab |
