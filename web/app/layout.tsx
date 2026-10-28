@@ -6,8 +6,9 @@ const text = Barlow({ variable: "--font-text", subsets: ["latin"], weight: ["400
 const condensed = Barlow_Condensed({ variable: "--font-num", subsets: ["latin"], weight: ["500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: "Novice Bodybuilding Tracker",
-  description: "Workout log for the Ripped Body Novice Bodybuilding Program with automatic load progression.",
+  title: "Overkill Tracker",
+  description: "Tracks workouts, food, weight and steps.",
+  appleWebApp: { title: "Overkill" },
 };
 
 export const viewport: Viewport = {

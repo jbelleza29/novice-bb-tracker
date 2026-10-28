@@ -1,4 +1,6 @@
-# Novice Bodybuilding Tracker
+# Overkill Tracker
+
+Live at https://overkilltracker.pritz.dev.
 
 Mobile-first workout log for the [Ripped Body Novice Bodybuilding Program](https://rippedbody.com/novice-bodybuilding-program/). Log each set in the gym; the app works out next session's load for every exercise using the [progression rules](https://rippedbody.com/progression/).
 

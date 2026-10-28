@@ -44,7 +44,7 @@ export default function Tracker() {
       <header className="top">
         <div className="top-inner">
           <div className="brand">
-            <h1>Novice Bodybuilding</h1>
+            <h1>Overkill Tracker</h1>
             {snap?.sync === "signed-out" ? (
               <button className="sync" onClick={() => setLogin(true)}>{SYNC_TEXT["signed-out"]}</button>
             ) : (
