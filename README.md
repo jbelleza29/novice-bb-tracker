@@ -4,6 +4,14 @@ Live at https://overkilltracker.pritz.dev.
 
 Mobile-first workout log for the [Ripped Body Novice Bodybuilding Program](https://rippedbody.com/novice-bodybuilding-program/). Log each set in the gym; the app works out next session's load for every exercise using the [progression rules](https://rippedbody.com/progression/).
 
+<p>
+  <img src="docs/screenshots/workout.png" width="250" alt="Workout tab: each exercise shows next session's load and why it changed">
+  <img src="docs/screenshots/cut-trend.png" width="250" alt="Cut tab: 7-day average weight projected to the goal date">
+  <img src="docs/screenshots/history.png" width="250" alt="History tab: logged sessions with load and reps per set">
+</p>
+
+Screenshots use made-up data.
+
 ## Layout
 
 - `web/` – Next.js + TypeScript. Builds to static files.
