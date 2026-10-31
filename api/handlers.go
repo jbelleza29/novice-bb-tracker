@@ -9,6 +9,7 @@ import (
 	"mime"
 	"net/http"
 	"regexp"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type server struct {
 	ipLimits ipLimiter
 	est      *estimator
 	ins      *insighter
+	jobs     sync.WaitGroup // estimates still running
 }
 
 // Matches JS Date.toISOString(), so stored dates sort correctly as text.
@@ -35,7 +37,8 @@ func (s *server) routes() http.Handler {
 	mux.Handle("GET /api/sessions", s.auth(s.listSessions))
 	mux.Handle("PUT /api/sessions/{id}", s.auth(s.putSession))
 	mux.Handle("DELETE /api/sessions", s.auth(s.deleteSessions))
-	mux.Handle("POST /api/estimate", s.auth(s.estimate))
+	mux.Handle("POST /api/estimates", s.auth(s.startEstimate))
+	mux.Handle("GET /api/estimates/{id}", s.auth(s.getEstimate))
 	mux.Handle("GET /api/insight", s.auth(s.getInsight))
 	mux.Handle("POST /api/insight", s.auth(s.postInsight))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {

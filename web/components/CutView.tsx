@@ -3,15 +3,21 @@ import { completeCut, cutDraft, todayISO } from "@/lib/cut";
 import { store, type Snapshot } from "@/lib/store";
 import type { CutDraft } from "@/lib/types";
 import CutForm from "./CutForm";
-import CutToday from "./CutToday";
+import CutToday, { type Focus } from "./CutToday";
 import CutTrend from "./CutTrend";
 import CutWeek from "./CutWeek";
 
 type Tab = "today" | "trend" | "week";
 
-export default function CutView({ snap }: { snap: Snapshot }) {
+export default function CutView({ snap, focus }: { snap: Snapshot; focus: Focus | null }) {
   const [tab, setTab] = useState<Tab>("today");
   const [date, setDate] = useState(todayISO);
+  const [focused, setFocused] = useState(0);
+  if (focus && focus.n !== focused) {
+    setFocused(focus.n);
+    setTab("today");
+    setDate(focus.date);
+  }
   const cut = snap.state.cut;
   if (!cut) return <CutSetup />;
 
@@ -24,7 +30,7 @@ export default function CutView({ snap }: { snap: Snapshot }) {
           </button>
         ))}
       </div>
-      {tab === "today" ? <CutToday snap={snap} cut={cut} date={date} onDate={setDate} />
+      {tab === "today" ? <CutToday snap={snap} cut={cut} date={date} onDate={setDate} focus={focus} />
         : tab === "trend" ? <CutTrend snap={snap} cut={cut} />
         : <CutWeek snap={snap} cut={cut} />}
     </>

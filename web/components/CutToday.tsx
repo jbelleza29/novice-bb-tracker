@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addDays, dayChecks, dayTotals, foodOn, liftDates, parseISO, todayISO } from "@/lib/cut";
+import { addDays, dayChecks, dayTotals, foodOn, isGuess, liftDates, parseISO, todayISO } from "@/lib/cut";
 import { fmt } from "@/lib/engine";
 import { store, type Snapshot } from "@/lib/store";
 import type { CutSettings, DayLog, FoodEntry, ISODate } from "@/lib/types";
@@ -8,20 +8,27 @@ import { DescribeSheet, FoodSheet, ValueSheet } from "./CutSheets";
 import InsightBox from "./InsightBox";
 import NumField from "./NumField";
 
-type Open = null | { kind: "weight" } | { kind: "steps" } | { kind: "describe" } | { kind: "food"; entry?: FoodEntry };
+type Open = null | { kind: "weight" } | { kind: "steps" } | { kind: "describe"; entry?: FoodEntry } | { kind: "food"; entry?: FoodEntry };
+export type Focus = { id: string; date: ISODate; n: number };
 
 export const updateDay = (date: ISODate, patch: Partial<DayLog>) =>
   store.updateState((s, now) => ({ ...s, days: { ...s.days, [date]: { ...s.days[date], ...patch, updatedAt: now } } }));
 
 const time = (at: number | undefined) => (at == null ? "" : new Date(at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
 
-export default function CutToday({ snap, cut, date, onDate }: {
+export default function CutToday({ snap, cut, date, onDate, focus }: {
   snap: Snapshot;
   cut: CutSettings;
   date: ISODate;
   onDate: (d: ISODate) => void;
+  focus: Focus | null;
 }) {
   const [open, setOpen] = useState<Open>(null);
+  const [focused, setFocused] = useState(0);
+  if (focus && focus.n !== focused && snap.state.food[focus.id]) {
+    setFocused(focus.n);
+    setOpen({ kind: "food", entry: snap.state.food[focus.id] });
+  }
   const today = todayISO();
   const log = snap.state.days[date];
   const food = foodOn(snap.state.food, date);
@@ -86,10 +93,13 @@ export default function CutToday({ snap, cut, date, onDate }: {
         {food.length === 0 && <p className="entry-empty">Nothing logged yet</p>}
         <ul className="food-list">
           {food.map((f) => (
-            <li key={f.id}>
-              <button onClick={() => setOpen({ kind: "food", entry: f })}>
-                <span>{f.name}<small>{time(f.at)} · {f.source === "described" ? "described" : "manual"}</small></span>
-                <span className="food-num">{f.kcal.toLocaleString()}<small>{f.proteinG} g</small></span>
+            <li key={f.id} className={f.estimate}>
+              <button onClick={() => setOpen(f.estimate ? { kind: "describe", entry: f } : { kind: "food", entry: f })}>
+                <span>{f.name}<small>{time(f.at)} · {f.estimate === "pending" ? "estimating…" : f.estimate === "failed" ? "estimate failed"
+                  : f.source === "manual" ? "manual" : f.edited ? "edited" : "estimate"}</small></span>
+                {f.estimate === "pending" ? <span className="spin" aria-label="Estimating" />
+                  : f.estimate === "failed" ? <span className="retry">Retry</span>
+                  : <span className="food-num">{isGuess(f) && <span className="approx" title="Estimate">≈</span>}{f.kcal.toLocaleString()}<small>{f.proteinG} g</small></span>}
               </button>
             </li>
           ))}
@@ -172,7 +182,7 @@ export default function CutToday({ snap, cut, date, onDate }: {
           onSave={(n) => updateDay(date, { steps: n == null ? undefined : Math.round(n), stepsAt: n == null ? undefined : Date.now() })} />
       )}
       {open?.kind === "food" && <FoodSheet date={date} entry={open.entry} onClose={() => setOpen(null)} />}
-      {open?.kind === "describe" && <DescribeSheet date={date} onClose={() => setOpen(null)} />}
+      {open?.kind === "describe" && <DescribeSheet date={date} entry={open.entry} onClose={() => setOpen(null)} />}
     </>
   );
 }

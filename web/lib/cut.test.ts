@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, applyDecision, avg7, checkpoint, checkpointInput, completeCut, cutDraft, dayTotals, foodOn, migrateLegacyFood, mondayOf, projection, weekSummary } from "./cut";
+import { addDays, applyDecision, avg7, checkpoint, checkpointInput, completeCut, cutDraft, dayTotals, foodOn, isGuess, migrateLegacyFood, mondayOf, projection, weekSummary } from "./cut";
 import { defaultState, withDefaults } from "./engine";
 import { mergeState } from "./merge";
 import type { AppState, CutSettings, DayLog, FoodEntry, LegacyDayLog } from "./types";
@@ -150,5 +150,34 @@ describe("day recap", () => {
     const sent = JSON.parse(daySummary(s, [], "2026-11-01"));
     expect(sent.food).toEqual([["13:05", "a", 700, 55], ["19:40", "b", 1050, 60]]);
     expect(sent.totals).toEqual({ kcal: 1750, protein: 115, fat: null, carbs: null, fibre: null });
+  });
+});
+
+describe("background estimates", () => {
+  const pending = entry("p", "2026-11-01", 0, 0, { source: "described", text: "rice and egg", estimate: "pending" });
+  const item = { name: "Rice", portion: "1 cup", kcal: 205, proteinG: 4, fatG: 0, carbsG: 45, fibreG: 1 };
+
+  it("leaves running and failed estimates out of the day's totals", () => {
+    const food = { a: entry("a", "2026-11-01", 400, 30), p: pending, f: { ...pending, id: "f", estimate: "failed" as const } };
+    expect(dayTotals(food, "2026-11-01")).toMatchObject({ kcal: 400, proteinG: 30 });
+    expect(foodOn(food, "2026-11-01")).toHaveLength(3);
+  });
+
+  it("fills in a pending entry once, and keeps a delete", async () => {
+    const { applyJob } = await import("./estimates");
+    const s = { ...defaultState(), food: { p: pending } };
+    const done = applyJob(s, "p", { status: "done", items: [item], note: "" }, 9);
+    expect(done.food.p).toMatchObject({ name: "Rice", kcal: 205, proteinG: 4, updatedAt: 9 });
+    expect(done.food.p.estimate).toBeUndefined();
+    expect(isGuess(done.food.p)).toBe(true);
+    expect(applyJob(done, "p", { status: "failed", error: "x" }, 10)).toBe(done);
+    const gone = { ...s, food: { p: { ...pending, deleted: true } } };
+    expect(applyJob(gone, "p", { status: "done", items: [item] }, 9)).toBe(gone);
+  });
+
+  it("marks a failed job with a readable reason", async () => {
+    const { applyJob } = await import("./estimates");
+    const s = applyJob({ ...defaultState(), food: { p: pending } }, "p", { status: "failed", error: "the server restarted, try again" }, 9);
+    expect(s.food.p).toMatchObject({ estimate: "failed", error: "The server restarted, try again." });
   });
 });

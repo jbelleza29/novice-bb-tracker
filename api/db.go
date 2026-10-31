@@ -29,6 +29,13 @@ CREATE TABLE IF NOT EXISTS insights (
 	created_at   INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS insights_kind_period ON insights (kind, period, created_at);
+CREATE TABLE IF NOT EXISTS estimates (
+	id         TEXT    PRIMARY KEY,
+	status     TEXT    NOT NULL,
+	result     TEXT    NOT NULL DEFAULT '',
+	error      TEXT    NOT NULL DEFAULT '',
+	created_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS auth_tokens (
 	hash       TEXT    PRIMARY KEY,
 	created_at INTEGER NOT NULL

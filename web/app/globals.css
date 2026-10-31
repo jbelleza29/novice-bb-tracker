@@ -237,6 +237,18 @@ details summary{cursor:pointer;color:var(--muted);font-size:14px;margin-top:10px
 .food-list button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:9px 0;background:none;border:0;text-align:left;font-size:15.5px}
 .food-list small{display:block;font-size:12.5px;color:var(--muted)}
 .food-num{text-align:right;font-family:var(--num);font-size:20px;font-weight:600;white-space:nowrap}
+.food-list li.pending button,.food-list li.failed button{color:var(--muted)}
+.food-list .approx{color:var(--blue);margin-right:3px}
+.food-list .retry{font-size:14px;font-weight:600;color:var(--red)}
+.spin{display:inline-block;flex:none;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}}
+.estimating{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:15.5px}
+.ready{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;margin:0 0 10px;padding:9px 12px;border:0;border-radius:10px;background:var(--green);color:var(--bg);text-align:left;font-size:14.5px}
+.ready b{display:block}
+.ready-text{min-width:0}
+.ready-text span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ready-go{flex:none;font-weight:600;text-decoration:underline}
 .cta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .sheet-actions{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:14px}
 .sheet-actions .primary{flex:1 1 100%}

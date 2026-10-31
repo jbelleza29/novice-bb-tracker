@@ -37,6 +37,13 @@ export interface InsightReply {
   enabled: boolean;
 }
 
+export interface EstimateJob {
+  status: "pending" | "done" | "failed";
+  items?: MealItem[];
+  note?: string;
+  error?: string;
+}
+
 export const api = {
   login: (passcode: string) => call<null>("POST", "/login", { passcode }),
   logout: () => call<null>("POST", "/logout"),
@@ -48,5 +55,6 @@ export const api = {
   getInsight: (kind: string, period: string) =>
     call<InsightReply>("GET", `/insight?kind=${kind}&period=${period}`),
   requestInsight: (kind: string, period: string, summary: string) => call<InsightReply>("POST", "/insight", { kind, period, summary }),
-  estimate: (text: string) => call<{ items: MealItem[]; note: string }>("POST", "/estimate", { text }),
+  startEstimate: (id: string, text: string) => call<EstimateJob>("POST", "/estimates", { id, text }),
+  getEstimate: (id: string) => call<EstimateJob>("GET", "/estimates/" + encodeURIComponent(id)),
 };

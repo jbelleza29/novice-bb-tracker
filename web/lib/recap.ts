@@ -1,4 +1,4 @@
-import { addDays, avg7, dayChecks, dayTotals, foodOn, liftDates, parseISO, type DayChecks, type Totals } from "./cut";
+import { addDays, avg7, dayChecks, dayTotals, eatenOn, liftDates, parseISO, type DayChecks, type Totals } from "./cut";
 import type { AppState, CutSettings, FoodEntry, ISODate, Session } from "./types";
 
 const hhmm = (at: number) => {
@@ -18,7 +18,7 @@ export interface DayRecap {
 export function dayRecap(state: AppState, sessions: Session[], date: ISODate): DayRecap {
   const cut = state.cut!, t = cut.targets;
   const log = state.days[date];
-  const food = foodOn(state.food, date);
+  const food = eatenOn(state.food, date);
   const totals = dayTotals(state.food, date);
   const lifted = liftDates(sessions).has(date);
   const checks = dayChecks(t, totals, log, lifted);
@@ -66,7 +66,7 @@ function totalsForAI(food: FoodEntry[], totals: Totals | null) {
 export function daySummary(state: AppState, sessions: Session[], date: ISODate): string {
   const cut = state.cut!, t = cut.targets;
   const log = state.days[date];
-  const food = foodOn(state.food, date);
+  const food = eatenOn(state.food, date);
   const totals = totalsForAI(food, dayTotals(state.food, date));
   const lifts = liftDates(sessions);
   const prev = Array.from({ length: 7 }, (_, i) => addDays(date, -7 + i)).map((d) => {
@@ -98,7 +98,7 @@ export function weekSummaryForAI(state: AppState, sessions: Session[], monday: I
   const lifts = liftDates(sessions);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i)).filter((d) => d <= today).map((d) => {
     const x = dayTotals(state.food, d);
-    const f = foodOn(state.food, d);
+    const f = eatenOn(state.food, d);
     const log = state.days[d];
     return [
       parseISO(d).toLocaleDateString("en", { weekday: "short" }) + " " + d.slice(5),

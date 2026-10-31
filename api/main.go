@@ -22,6 +22,9 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	if err := tidyEstimates(db); err != nil {
+		log.Fatal(err)
+	}
 
 	s := &server{
 		db:       db,
@@ -42,7 +45,7 @@ func main() {
 		Handler:           s.routes(),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      100 * time.Second, // meal estimates can take a while
+		WriteTimeout:      100 * time.Second, // AI insights can take a while
 		IdleTimeout:       2 * time.Minute,
 	}
 
@@ -60,6 +63,13 @@ func main() {
 	defer cancel()
 	if err := srv.Shutdown(shutdown); err != nil {
 		log.Print(err)
+	}
+	// let estimates already running finish, within the same few seconds
+	done := make(chan struct{})
+	go func() { s.jobs.Wait(); close(done) }()
+	select {
+	case <-done:
+	case <-shutdown.Done():
 	}
 }
 

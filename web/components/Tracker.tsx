@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { store, useTracker, type SyncStatus } from "@/lib/store";
 import type { Result } from "@/lib/engine";
+import { checkEstimates } from "@/lib/estimates";
+import type { FoodEntry } from "@/lib/types";
+import type { Focus } from "./CutToday";
 import CutView from "./CutView";
 import HistoryView from "./HistoryView";
 import RestTimer, { type Timer } from "./RestTimer";
@@ -29,8 +32,31 @@ export default function Tracker() {
   const [summary, setSummary] = useState<{ day: number; nextDay: number; results: Result[] } | null>(null);
   const [login, setLogin] = useState(false);
   const [checkin, setCheckin] = useState<Record<number, boolean>>({});
+  const [ready, setReady] = useState<FoodEntry | null>(null);
+  const [focus, setFocus] = useState<Focus | null>(null);
 
   useEffect(() => store.load(), []);
+
+  // Poll while any meal estimate is running, and again when the app comes back to the front.
+  const pending = snap ? Object.values(snap.state.food).filter((f) => f.estimate === "pending" && !f.deleted).map((f) => f.id).join() : "";
+  useEffect(() => {
+    if (!pending) return;
+    // filling in the last estimate ends this effect before its result lands, so no "still mounted" check
+    const tick = () => void checkEstimates().then((done) => done.length && setReady(done[done.length - 1]));
+    tick();
+    const id = setInterval(tick, 2500);
+    const onShow = () => document.visibilityState === "visible" && tick();
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onShow);
+    };
+  }, [pending]);
+  useEffect(() => {
+    if (!ready) return;
+    const id = setTimeout(() => setReady(null), 10000);
+    return () => clearTimeout(id);
+  }, [ready]);
 
   const go = (v: View) => {
     setView(v);
@@ -58,6 +84,12 @@ export default function Tracker() {
               </button>
             ))}
           </nav>
+          {ready && (
+            <button className="ready" onClick={() => { setFocus({ id: ready.id, date: ready.date, n: Date.now() }); setReady(null); go("cut"); }}>
+              <span className="ready-text"><b>Estimate ready · {ready.kcal.toLocaleString()} kcal</b><span>{ready.name}</span></span>
+              <span className="ready-go">Review</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -74,7 +106,7 @@ export default function Tracker() {
             onFinished={(s) => { setTimer(null); setDay(s.day); setSummary(s); }}
           />
         ) : view === "cut" ? (
-          <CutView snap={snap} />
+          <CutView snap={snap} focus={focus} />
         ) : view === "history" ? (
           <HistoryView sessions={snap.sessions} checkin={checkin} onCheckin={setCheckin} />
         ) : (

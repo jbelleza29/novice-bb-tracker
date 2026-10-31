@@ -75,9 +75,14 @@ export function sumFood(xs: Partial<Totals>[]): Totals {
 export const foodOn = (food: Record<string, FoodEntry>, date: ISODate) =>
   Object.values(food).filter((f) => f.date === date && !f.deleted).sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
 
+// What counts toward the day: estimates still running or failed don't.
+export const eatenOn = (food: Record<string, FoodEntry>, date: ISODate) => foodOn(food, date).filter((f) => !f.estimate);
+
+export const isGuess = (f: FoodEntry) => f.source === "described" && !f.estimate && !f.edited;
+
 // null when nothing is logged, so an empty day isn't scored as 0 kcal.
 export function dayTotals(food: Record<string, FoodEntry>, date: ISODate): Totals | null {
-  const es = foodOn(food, date);
+  const es = eatenOn(food, date);
   return es.length ? sumFood(es) : null;
 }
 

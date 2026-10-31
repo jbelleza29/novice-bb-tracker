@@ -125,6 +125,10 @@ export interface FoodEntry {
   fibreG?: number;
   text?: string; // what was typed for a described meal
   items?: MealItem[]; // Claude's breakdown for a described meal
+  note?: string; // Claude's caveat about the estimate
+  estimate?: "pending" | "failed"; // still with Claude, or it failed; left out of totals
+  error?: string; // why the estimate failed
+  edited?: boolean; // numbers changed by hand, so no longer only Claude's guess
   deleted?: boolean; // kept so the delete wins over older copies on other devices
   updatedAt: number;
 }
